@@ -3,8 +3,11 @@
 <head>
 
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎨</text></svg>">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
 <title>Canvas</title>
+
 <style>
 
 body{
@@ -14,7 +17,7 @@ body{
   background:#f5f5f5;
 }
 
-/* NAME */
+
 #nameBox{
   width:90%;
   font-size:100px;
@@ -24,12 +27,13 @@ body{
   box-sizing:border-box;
 }
 
-/* TOOLBAR */
+
 #toolbar{
   background:#ddd;
   padding:10px;
   font-size:18px;
 }
+
 
 .row{
   display:flex;
@@ -40,7 +44,7 @@ body{
   flex-wrap:wrap;
 }
 
-/* BOTTOM */
+
 #bottomControls{
   position:fixed;
   bottom:0;
@@ -51,6 +55,7 @@ body{
   border-top:2px solid #aaa;
 }
 
+
 #bottomControls .row{
   display:flex;
   justify-content:space-evenly;
@@ -58,6 +63,7 @@ body{
   flex-wrap:nowrap;
   gap:20px;
 }
+
 
 #bottomControls button{
   flex:1;
@@ -70,10 +76,12 @@ button{
   padding:5px 10px;
 }
 
+
 input{
   font-size:18px;
   padding:5px;
 }
+
 
 #modeIndicator{
   font-weight:bold;
@@ -81,9 +89,11 @@ input{
   border-radius:5px;
 }
 
+
 .drawMode{
   background:#c8f7c5;
 }
+
 
 .emojiMode{
   background:#f7d6c5;
@@ -101,10 +111,12 @@ canvas{
 
 </head>
 
+
 <body>
 
 
 <input id="nameBox" placeholder="Name">
+
 
 <div class="row">
 <button onclick="toggleSettings()">Hide / Show Settings</button>
@@ -119,6 +131,7 @@ canvas{
 
 
 <div class="row">
+
 <span id="modeIndicator" class="drawMode">
 Mode: Drawing
 </span>
@@ -126,7 +139,9 @@ Mode: Drawing
 <button onclick="toggleMode()">
 Switch Modes
 </button>
+
 </div>
+
 
 
 
@@ -139,13 +154,13 @@ Brush Color:
 
 Brush Size:
 
-<button onclick="changeBrush(-1)">-</button>
+<button id="brushMinus">-</button>
 
 <span id="brushDisplay">5</span>
 
-<button onclick="changeBrush(1)">+</button>
-</div>
+<button id="brushPlus">+</button>
 
+</div>
 
 
 
@@ -160,15 +175,18 @@ id="emojiInput"
 value="😀"
 style="width:120px;text-align:center;">
 
+
 Size:
 
-<button onclick="changeEmojiSize(-5)">-</button>
+<button id="emojiMinus">-</button>
 
 <span id="emojiSizeDisplay">25</span>
 
-<button onclick="changeEmojiSize(5)">+</button>
+<button id="emojiPlus">+</button>
 
 </div>
+
+
 
 
 
@@ -187,40 +205,47 @@ Size:
 
 
 
+
 <canvas id="canvas"></canvas>
 
 
 
 <div id="bottomControls">
-<div class="row">
 
+
+<div class="row">
 
 <button onclick="toggleCrop()">
 Auto Crop: ON
 </button>
+
 
 <button onclick="saveImage()">
 Save as PNG
 </button>
 
 </div>
-<div class="row">
 
+
+
+<div class="row">
 
 <button onclick="shareImage()">
 Send / Share
 </button>
 
+
 <button onclick="clearDrawing()">
 Clear Lines
 </button>
+
 
 <button onclick="clearEverything()">
 Clear Everything
 </button>
 
-
 </div>
+
 
 </div>
 
@@ -228,43 +253,58 @@ Clear Everything
 
 <script>
 
+
 let canvas=document.getElementById("canvas");
+
 let ctx=canvas.getContext("2d");
 
 
 canvas.width=window.innerWidth;
+
 canvas.height=window.innerHeight-300;
 
 
+
 let drawing=false;
+
 let emojiMode=false;
 
+
 let brushSize=5;
+
 let emojiSize=25;
 
 
 let undoStack=[];
+
 let redoStack=[];
 
+
 let emojiElements=[];
+
 
 
 function toggleName(){
 
 let name=document.getElementById("nameBox");
 
-name.style.display=
+
+name.style.display =
 name.style.display==="none"
 ?"block"
 :"none";
 
 }
 
+
+
+
 function toggleSettings(){
 
 let toolbar=document.getElementById("toolbar");
 
-toolbar.style.display=
+
+toolbar.style.display =
 toolbar.style.display==="none"
 ?"block"
 :"none";
@@ -274,28 +314,37 @@ toolbar.style.display==="none"
 
 
 
+
 function updateUI(){
+
 
 document.getElementById("brushDisplay").innerText=brushSize;
 
+
 document.getElementById("emojiSizeDisplay").innerText=emojiSize;
+
 
 
 let indicator=document.getElementById("modeIndicator");
 
 
+
 if(emojiMode){
 
 indicator.innerText="Mode: Emoji/Text";
+
 indicator.className="emojiMode";
 
 }
+
 else{
 
 indicator.innerText="Mode: Drawing";
+
 indicator.className="drawMode";
 
 }
+
 
 }
 
@@ -314,7 +363,10 @@ updateUI();
 
 function changeBrush(v){
 
-brushSize=Math.max(1,brushSize+v);
+brushSize=Math.max(
+1,
+brushSize+v
+);
 
 updateUI();
 
@@ -325,7 +377,10 @@ updateUI();
 
 function changeEmojiSize(v){
 
-emojiSize=Math.max(5,emojiSize+v);
+emojiSize=Math.max(
+5,
+emojiSize+v
+);
 
 updateUI();
 
@@ -336,25 +391,33 @@ updateUI();
 
 function saveState(){
 
-undoStack.push(canvas.toDataURL());
+undoStack.push({
+
+image:canvas.toDataURL(),
+
+emojis:JSON.parse(JSON.stringify(emojiElements))
+
+});
+
 
 redoStack=[];
 
 }
 
-
-
-
 function drawEmoji(x,y){
 
 let text=document.getElementById("emojiInput").value;
 
+
 emojiElements.push({
+
 x:x,
 y:y,
 text:text,
 size:emojiSize
+
 });
+
 
 redrawEmojis();
 
@@ -373,7 +436,11 @@ ctx.textAlign="center";
 
 ctx.textBaseline="middle";
 
-ctx.fillText(e.text,e.x,e.y);
+ctx.fillText(
+e.text,
+e.x,
+e.y
+);
 
 });
 
@@ -382,9 +449,11 @@ ctx.fillText(e.text,e.x,e.y);
 
 
 
+
 function clearDrawing(){
 
 saveState();
+
 
 ctx.clearRect(
 0,
@@ -392,6 +461,7 @@ ctx.clearRect(
 canvas.width,
 canvas.height
 );
+
 
 redrawEmojis();
 
@@ -400,11 +470,14 @@ redrawEmojis();
 
 
 
+
 function clearEverything(){
 
 saveState();
 
+
 emojiElements=[];
+
 
 ctx.clearRect(
 0,
@@ -414,6 +487,7 @@ canvas.height
 );
 
 }
+
 
 
 
@@ -425,16 +499,21 @@ function toggleCrop(){
 
 autoCrop=!autoCrop;
 
+
 event.target.innerText =
 autoCrop
-? "Auto Crop: ON"
-: "Auto Crop: OFF";
+?"Auto Crop: ON"
+:"Auto Crop: OFF";
 
 }
 
 
 
+
+
+
 function saveImage(){
+
 
 if(!autoCrop){
 
@@ -451,9 +530,8 @@ return;
 }
 
 
-// AUTO CROP
 
-let imageData = ctx.getImageData(
+let imageData=ctx.getImageData(
 0,
 0,
 canvas.width,
@@ -465,16 +543,22 @@ let pixels=imageData.data;
 
 
 let minX=canvas.width;
+
 let minY=canvas.height;
+
 let maxX=0;
+
 let maxY=0;
+
 
 
 for(let y=0;y<canvas.height;y++){
 
 for(let x=0;x<canvas.width;x++){
 
+
 let index=(y*canvas.width+x)*4;
+
 
 let alpha=pixels[index+3];
 
@@ -482,15 +566,20 @@ let alpha=pixels[index+3];
 if(alpha>0){
 
 if(x<minX)minX=x;
+
 if(x>maxX)maxX=x;
+
 if(y<minY)minY=y;
+
 if(y>maxY)maxY=y;
 
 }
 
+
 }
 
 }
+
 
 
 if(maxX===0 && maxY===0){
@@ -504,33 +593,50 @@ return;
 
 
 let cropWidth=maxX-minX+1;
+
 let cropHeight=maxY-minY+1;
+
 
 
 let cropCanvas=document.createElement("canvas");
 
+
 cropCanvas.width=cropWidth;
+
 cropCanvas.height=cropHeight;
+
 
 
 let cropCtx=cropCanvas.getContext("2d");
 
 
+
 cropCtx.drawImage(
+
 canvas,
+
 minX,
+
 minY,
+
 cropWidth,
+
 cropHeight,
+
 0,
+
 0,
+
 cropWidth,
+
 cropHeight
+
 );
 
 
 
 let link=document.createElement("a");
+
 
 link.download="drawing.png";
 
@@ -542,18 +648,31 @@ link.click();
 }
 
 
+
+
+
+
+
 async function shareImage(){
+
 
 canvas.toBlob(async blob=>{
 
+
 let file=new File(
+
 [blob],
+
 "drawing.png",
+
 {type:"image/png"}
+
 );
 
 
+
 if(navigator.share){
+
 
 await navigator.share({
 
@@ -563,11 +682,18 @@ files:[file]
 
 });
 
+
 }
+
+
 
 });
 
+
 }
+
+
+
 
 
 
@@ -575,7 +701,9 @@ files:[file]
 
 canvas.addEventListener("mousedown",e=>{
 
+
 saveState();
+
 
 
 if(emojiMode){
@@ -590,16 +718,21 @@ return;
 }
 
 
+
 drawing=true;
 
+
 ctx.beginPath();
+
 
 ctx.moveTo(
 e.offsetX,
 e.offsetY
 );
 
+
 });
+
 
 
 
@@ -608,15 +741,19 @@ e.offsetY
 canvas.addEventListener("mousemove",e=>{
 
 
-if(!drawing||emojiMode)return;
+if(!drawing || emojiMode)return;
+
 
 
 ctx.lineWidth=brushSize;
 
+
 ctx.lineCap="round";
+
 
 ctx.strokeStyle=
 document.getElementById("colorPicker").value;
+
 
 
 ctx.lineTo(
@@ -624,10 +761,14 @@ e.offsetX,
 e.offsetY
 );
 
+
 ctx.stroke();
 
 
+
 });
+
+
 
 
 
@@ -638,11 +779,18 @@ canvas.addEventListener(
 
 
 
+
+
+
+
 canvas.addEventListener("touchstart",e=>{
+
 
 e.preventDefault();
 
+
 let rect=canvas.getBoundingClientRect();
+
 
 let t=e.touches[0];
 
@@ -652,37 +800,60 @@ let x=t.clientX-rect.left;
 let y=t.clientY-rect.top;
 
 
+
 saveState();
+
+
 
 
 if(emojiMode){
 
-drawEmoji(x,y);
+
+drawEmoji(
+x,
+y
+);
+
 
 return;
 
 }
 
 
+
 drawing=true;
+
 
 ctx.beginPath();
 
-ctx.moveTo(x,y);
+
+ctx.moveTo(
+x,
+y
+);
 
 
 });
 
 
 
+
+
+
 canvas.addEventListener("touchmove",e=>{
+
 
 e.preventDefault();
 
-if(!drawing||emojiMode)return;
+
+
+if(!drawing || emojiMode)return;
+
 
 
 let rect=canvas.getBoundingClientRect();
+
+
 
 let t=e.touches[0];
 
@@ -692,20 +863,33 @@ let x=t.clientX-rect.left;
 let y=t.clientY-rect.top;
 
 
+
+
 ctx.lineWidth=brushSize;
 
+
 ctx.lineCap="round";
+
 
 ctx.strokeStyle=
 document.getElementById("colorPicker").value;
 
 
-ctx.lineTo(x,y);
+
+ctx.lineTo(
+x,
+y
+);
+
 
 ctx.stroke();
 
 
 });
+
+
+
+
 
 
 canvas.addEventListener(
@@ -715,73 +899,250 @@ canvas.addEventListener(
 
 
 
-function undo(){
 
-  if(undoStack.length === 0) return;
 
-  redoStack.push(canvas.toDataURL());
 
-  let img = new Image();
 
-  img.src = undoStack.pop();
 
-  img.onload = function(){
+function restoreState(state){
 
-    ctx.clearRect(
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
 
-    ctx.drawImage(
-      img,
-      0,
-      0
-    );
+let img=new Image();
 
-    redrawEmojis();
 
-  };
+
+img.onload=function(){
+
+
+ctx.clearRect(
+
+0,
+
+0,
+
+canvas.width,
+
+canvas.height
+
+);
+
+
+
+ctx.drawImage(
+
+img,
+
+0,
+
+0
+
+);
+
+
+
+emojiElements=state.emojis;
+
+
+
+redrawEmojis();
+
+
+
+};
+
+
+
+img.src=state.image;
+
 
 }
+
+
+
+
+
+
+
+
+function undo(){
+
+
+if(undoStack.length===0)return;
+
+
+
+redoStack.push({
+
+
+image:canvas.toDataURL(),
+
+
+emojis:JSON.parse(JSON.stringify(emojiElements))
+
+
+});
+
+
+
+restoreState(
+undoStack.pop()
+);
+
+
+}
+
+
+
+
 
 
 
 function redo(){
 
-  if(redoStack.length === 0) return;
 
-  undoStack.push(canvas.toDataURL());
+if(redoStack.length===0)return;
 
-  let img = new Image();
 
-  img.src = redoStack.pop();
 
-  img.onload = function(){
+undoStack.push({
 
-    ctx.clearRect(
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
 
-    ctx.drawImage(
-      img,
-      0,
-      0
-    );
+image:canvas.toDataURL(),
 
-    redrawEmojis();
 
-  };
+emojis:JSON.parse(JSON.stringify(emojiElements))
+
+
+});
+
+
+
+restoreState(
+redoStack.pop()
+);
+
 
 }
 
+
+
+
+
+
+
+
+
+function holdButton(id,action){
+
+
+let timer;
+
+
+let button=document.getElementById(id);
+
+
+
+button.addEventListener(
+"pointerdown",
+()=>{
+
+
+action();
+
+
+timer=setInterval(
+
+action,
+
+100
+
+);
+
+
+});
+
+
+
+
+button.addEventListener(
+"pointerup",
+()=>{
+
+
+clearInterval(timer);
+
+
+});
+
+
+
+button.addEventListener(
+"pointerleave",
+()=>{
+
+
+clearInterval(timer);
+
+
+});
+
+
+button.addEventListener(
+"pointercancel",
+()=>{
+
+
+clearInterval(timer);
+
+
+});
+
+
+}
+
+
+
+
+
+
+
+holdButton(
+"brushMinus",
+()=>changeBrush(-1)
+);
+
+
+
+holdButton(
+"brushPlus",
+()=>changeBrush(1)
+);
+
+
+
+
+holdButton(
+"emojiMinus",
+()=>changeEmojiSize(-5)
+);
+
+
+
+holdButton(
+"emojiPlus",
+()=>changeEmojiSize(5)
+);
+
+
+
+
+
 updateUI();
+
 
 </script>
 
+
 </body>
+
 </html>
