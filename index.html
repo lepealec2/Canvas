@@ -16,7 +16,6 @@ h1 {
   font-size: 36px;
 }
 
-
 #nameBox {
   width: 90%;
   margin: 10px auto;
@@ -27,7 +26,6 @@ h1 {
   box-sizing: border-box;
 }
 
-
 #toolbar {
   padding: 10px;
   background: white;
@@ -35,12 +33,14 @@ h1 {
   font-size: 24px;
 }
 
-
 input, button {
   font-size: 24px;
-  margin: 5px;
+  margin: 10px;
 }
 
+button {
+  padding: 10px 20px;
+}
 
 #canvasContainer {
   width: 90%;
@@ -50,20 +50,12 @@ input, button {
   background: white;
 }
 
-
 canvas {
   width: 100%;
   height: 100%;
   display: block;
   cursor: crosshair;
   touch-action: none;
-}
-
-
-#bottomControls {
-  width: 90%;
-  margin: 10px auto;
-  text-align: right;
 }
 
 </style>
@@ -85,12 +77,31 @@ canvas {
 Color:
 <input type="color" id="colorPicker" value="#000000">
 
+<br>
 
 Brush Size:
+
+<button onclick="changeBrush(-1)">-</button>
+
 <input type="number" id="brushSize" value="5" min="1" max="50">
+
+<button onclick="changeBrush(1)">+</button>
+
+<br>
 
 
 <button onclick="toggleCanvas()">Hide/Show</button>
+
+<button onclick="undo()">Undo</button>
+
+<button onclick="redo()">Redo</button>
+
+<button onclick="clearCanvas()">Clear</button>
+
+<button onclick="savePNG()">Save PNG</button>
+
+<button onclick="sharePNG()">Send</button>
+
 
 </div>
 
@@ -99,16 +110,6 @@ Brush Size:
 <div id="canvasContainer">
 
 <canvas id="canvas"></canvas>
-
-</div>
-
-
-
-<div id="bottomControls">
-
-<button onclick="clearCanvas()">Clear</button>
-
-<button onclick="savePNG()">Save PNG</button>
 
 </div>
 
@@ -126,10 +127,42 @@ let drawing = false;
 let visible = true;
 
 
+// Undo / Redo
 
-// Resize canvas and preserve drawing
+let history = [];
+let redoHistory = [];
+let maxHistory = 20;
 
-function resizeCanvas() {
+
+
+// Brush size
+
+function changeBrush(amount){
+
+  let input = document.getElementById("brushSize");
+
+  let size = parseInt(input.value) + amount;
+
+
+  if(size < 1){
+    size = 1;
+  }
+
+  if(size > 50){
+    size = 50;
+  }
+
+
+  input.value = size;
+
+}
+
+
+
+
+// Resize canvas
+
+function resizeCanvas(){
 
   let temp = document.createElement("canvas");
 
@@ -155,9 +188,112 @@ window.addEventListener("resize", resizeCanvas);
 
 
 
-// Draw line
 
-function drawLine(x,y) {
+// Save state
+
+function saveState(){
+
+  if(history.length >= maxHistory){
+    history.shift();
+  }
+
+
+  history.push(canvas.toDataURL());
+
+
+  redoHistory = [];
+
+}
+
+
+
+
+
+// Undo
+
+function undo(){
+
+  if(history.length === 0){
+    return;
+  }
+
+
+  redoHistory.push(canvas.toDataURL());
+
+
+  let img = new Image();
+
+  img.src = history.pop();
+
+
+  img.onload = function(){
+
+    ctx.clearRect(
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+
+    ctx.drawImage(
+      img,
+      0,
+      0
+    );
+
+  };
+
+}
+
+
+
+
+
+// Redo
+
+function redo(){
+
+  if(redoHistory.length === 0){
+    return;
+  }
+
+
+  history.push(canvas.toDataURL());
+
+
+  let img = new Image();
+
+  img.src = redoHistory.pop();
+
+
+  img.onload = function(){
+
+    ctx.clearRect(
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+
+    ctx.drawImage(
+      img,
+      0,
+      0
+    );
+
+  };
+
+}
+
+
+
+
+
+// Draw
+
+function drawLine(x,y){
 
   ctx.lineWidth =
     document.getElementById("brushSize").value;
@@ -178,36 +314,50 @@ function drawLine(x,y) {
 
 
 
-// Mouse drawing
 
-canvas.addEventListener("mousedown", function(e){
+
+// Mouse
+
+canvas.addEventListener("mousedown",function(e){
+
+  saveState();
 
   drawing = true;
 
+
   ctx.beginPath();
 
-  ctx.moveTo(e.offsetX,e.offsetY);
+  ctx.moveTo(
+    e.offsetX,
+    e.offsetY
+  );
 
 });
 
 
-canvas.addEventListener("mousemove", function(e){
+
+canvas.addEventListener("mousemove",function(e){
 
   if(!drawing) return;
 
-  drawLine(e.offsetX,e.offsetY);
+
+  drawLine(
+    e.offsetX,
+    e.offsetY
+  );
 
 });
 
 
-canvas.addEventListener("mouseup", function(){
+
+canvas.addEventListener("mouseup",function(){
 
   drawing = false;
 
 });
 
 
-canvas.addEventListener("mouseleave", function(){
+canvas.addEventListener("mouseleave",function(){
 
   drawing = false;
 
@@ -216,11 +366,15 @@ canvas.addEventListener("mouseleave", function(){
 
 
 
-// Touch drawing
 
-canvas.addEventListener("touchstart", function(e){
+
+// Touch
+
+canvas.addEventListener("touchstart",function(e){
 
   e.preventDefault();
+
+  saveState();
 
 
   let rect = canvas.getBoundingClientRect();
@@ -243,12 +397,14 @@ canvas.addEventListener("touchstart", function(e){
 
 
 
-canvas.addEventListener("touchmove", function(e){
+canvas.addEventListener("touchmove",function(e){
 
   e.preventDefault();
 
 
-  if(!drawing) return;
+  if(!drawing){
+    return;
+  }
 
 
   let rect = canvas.getBoundingClientRect();
@@ -265,7 +421,7 @@ canvas.addEventListener("touchmove", function(e){
 
 
 
-canvas.addEventListener("touchend", function(){
+canvas.addEventListener("touchend",function(){
 
   drawing = false;
 
@@ -275,9 +431,14 @@ canvas.addEventListener("touchend", function(){
 
 
 
-// Clear drawing
+
+
+// Clear
 
 function clearCanvas(){
+
+  saveState();
+
 
   ctx.clearRect(
     0,
@@ -287,6 +448,7 @@ function clearCanvas(){
   );
 
 }
+
 
 
 
@@ -306,6 +468,7 @@ function toggleCanvas(){
 
 
 
+
 // Save PNG
 
 function savePNG(){
@@ -320,6 +483,53 @@ function savePNG(){
 
 
   link.click();
+
+}
+
+
+
+
+
+// Share PNG
+
+function sharePNG(){
+
+  canvas.toBlob(function(blob){
+
+
+    let file = new File(
+      [blob],
+      "drawing.png",
+      {
+        type:"image/png"
+      }
+    );
+
+
+    if(
+      navigator.share &&
+      navigator.canShare({files:[file]})
+    ){
+
+      navigator.share({
+
+        title:"Drawing",
+
+        text:"My drawing",
+
+        files:[file]
+
+      });
+
+    }
+    else{
+
+      alert("Sharing not supported on this device.");
+
+    }
+
+
+  });
 
 }
 
