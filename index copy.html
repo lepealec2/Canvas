@@ -1,207 +1,527 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Drawing Canvas</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 <style>
 
-body {
-  margin: 0;
-  font-family: Arial;
-  background: #f5f5f5;
-  text-align: center;
+body{
+  margin:0;
+  font-family:Arial;
+  text-align:center;
+  background:#f5f5f5;
 }
 
-h1 {
-  font-size: 36px;
+/* NAME */
+#nameBox{
+  width:90%;
+  font-size:100px;
+  text-align:center;
+  margin:10px auto;
+  display:block;
+  box-sizing:border-box;
 }
 
-#nameBox {
-  width: 90%;
-  margin: 10px auto;
-  display: block;
-  font-size: 100px;
-  padding: 5px;
-  text-align: center;
-  box-sizing: border-box;
+/* TOOLBAR */
+#toolbar{
+  background:#ddd;
+  padding:10px;
+  font-size:18px;
 }
 
-#toolbar {
-  padding: 10px;
-  background: white;
-  border-bottom: 1px solid #ccc;
-  font-size: 24px;
+.row{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:10px;
+  margin:5px 0;
+  flex-wrap:wrap;
 }
 
-input, button {
-  font-size: 24px;
-  margin: 10px;
+/* BOTTOM */
+#bottomControls{
+  position:fixed;
+  bottom:0;
+  left:0;
+  width:100%;
+  background:#ddd;
+  padding:10px;
+  border-top:2px solid #aaa;
 }
 
-button {
-  padding: 10px 20px;
+#bottomControls .row{
+  display:flex;
+  justify-content:space-evenly;
+  align-items:center;
+  flex-wrap:nowrap;
+  gap:20px;
 }
 
-#canvasContainer {
-  width: 90%;
-  height: 75vh;
-  margin: 20px auto;
-  border: 2px solid #333;
-  background: white;
+#bottomControls button{
+  flex:1;
+  max-width:220px;
 }
 
-canvas {
-  width: 100%;
-  height: 100%;
-  display: block;
-  cursor: crosshair;
-  touch-action: none;
+
+button{
+  font-size:18px;
+  padding:5px 10px;
+}
+
+input{
+  font-size:18px;
+  padding:5px;
+}
+
+#modeIndicator{
+  font-weight:bold;
+  padding:5px 10px;
+  border-radius:5px;
+}
+
+.drawMode{
+  background:#c8f7c5;
+}
+
+.emojiMode{
+  background:#f7d6c5;
+}
+
+
+canvas{
+  border:2px solid black;
+  touch-action:none;
+  display:block;
+  margin:0 auto;
 }
 
 </style>
 
 </head>
 
-
 <body>
-
-
-<h1>Drawing Board</h1>
 
 
 <input id="nameBox" placeholder="Name">
 
+<div class="row">
+<button onclick="toggleSettings()">Hide / Show Settings</button>
+<button onclick="toggleName()">Hide / Show Name</button>
+</div>
+
+
 
 <div id="toolbar">
 
-Color:
+<div id="controls">
+
+
+<div class="row">
+<span id="modeIndicator" class="drawMode">
+Mode: Drawing
+</span>
+
+<button onclick="toggleMode()">
+Switch Modes
+</button>
+</div>
+
+
+
+<div class="row">
+
+Brush Color:
+
 <input type="color" id="colorPicker" value="#000000">
 
-<br>
 
 Brush Size:
 
-<button onclick="changeBrush(-1)">-</button>
+<button onclick="changeBrush(-2)">-</button>
 
-<input type="number" id="brushSize" value="5" min="1" max="50">
+<span id="brushDisplay">5</span>
 
-<button onclick="changeBrush(1)">+</button>
+<button onclick="changeBrush(2)">+</button>
+</div>
 
-<br>
 
 
-<button onclick="toggleCanvas()">Hide/Show</button>
+
+
+
+<div class="row">
+
+Enter:
+
+<input 
+id="emojiInput"
+value="😀"
+style="width:120px;text-align:center;">
+
+Size:
+
+<button onclick="changeEmojiSize(-5)">-</button>
+
+<span id="emojiSizeDisplay">25</span>
+
+<button onclick="changeEmojiSize(5)">+</button>
+
+</div>
+
+
+
+<div class="row">
 
 <button onclick="undo()">Undo</button>
 
 <button onclick="redo()">Redo</button>
 
-<button onclick="clearCanvas()">Clear</button>
-
-<button onclick="savePNG()">Save PNG</button>
-
-<button onclick="sharePNG()">Send</button>
+</div>
 
 
 </div>
 
+</div>
 
 
-<div id="canvasContainer">
 
 <canvas id="canvas"></canvas>
 
+
+
+<div id="bottomControls">
+
+<div class="row">
+
+<button onclick="saveImage()">
+Save as PNG
+</button>
+
+<button onclick="shareImage()">
+Send / Share
+</button>
+
+<button onclick="clearDrawing()">
+Clear Lines
+</button>
+
+<button onclick="clearEverything()">
+Clear Everything
+</button>
+
+
 </div>
 
+</div>
 
 
 
 <script>
 
-
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
-
-
-let drawing = false;
-let visible = true;
+let canvas=document.getElementById("canvas");
+let ctx=canvas.getContext("2d");
 
 
-// Undo / Redo
-
-let history = [];
-let redoHistory = [];
-let maxHistory = 20;
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight-300;
 
 
+let drawing=false;
+let emojiMode=false;
 
-// Brush size
-
-function changeBrush(amount){
-
-  let input = document.getElementById("brushSize");
-
-  let size = parseInt(input.value) + amount;
+let brushSize=5;
+let emojiSize=25;
 
 
-  if(size < 1){
-    size = 1;
-  }
+let undoStack=[];
+let redoStack=[];
 
-  if(size > 50){
-    size = 50;
-  }
+let emojiElements=[];
 
 
-  input.value = size;
+function toggleName(){
+
+let name=document.getElementById("nameBox");
+
+name.style.display=
+name.style.display==="none"
+?"block"
+:"none";
+
+}
+
+function toggleSettings(){
+
+let toolbar=document.getElementById("toolbar");
+
+toolbar.style.display=
+toolbar.style.display==="none"
+?"block"
+:"none";
 
 }
 
 
 
 
-// Resize canvas
+function updateUI(){
 
-function resizeCanvas(){
+document.getElementById("brushDisplay").innerText=brushSize;
 
-  let temp = document.createElement("canvas");
-
-  temp.width = canvas.width;
-  temp.height = canvas.height;
-
-  temp.getContext("2d").drawImage(canvas,0,0);
+document.getElementById("emojiSizeDisplay").innerText=emojiSize;
 
 
-  canvas.width = canvas.clientWidth;
-  canvas.height = canvas.clientHeight;
+let indicator=document.getElementById("modeIndicator");
 
 
-  ctx.drawImage(temp,0,0);
+if(emojiMode){
+
+indicator.innerText="Mode: Emoji/Text";
+indicator.className="emojiMode";
+
+}
+else{
+
+indicator.innerText="Mode: Drawing";
+indicator.className="drawMode";
+
+}
 
 }
 
 
-resizeCanvas();
 
-window.addEventListener("resize", resizeCanvas);
+function toggleMode(){
+
+emojiMode=!emojiMode;
+
+updateUI();
+
+}
 
 
 
 
+function changeBrush(v){
 
-// Save state
+brushSize=Math.max(1,brushSize+v);
+
+updateUI();
+
+}
+
+
+
+
+function changeEmojiSize(v){
+
+emojiSize=Math.max(5,emojiSize+v);
+
+updateUI();
+
+}
+
+
+
 
 function saveState(){
 
-  if(history.length >= maxHistory){
-    history.shift();
+undoStack.push(canvas.toDataURL());
+
+redoStack=[];
+
+}
+
+
+
+
+function drawEmoji(x,y){
+
+let text=document.getElementById("emojiInput").value;
+
+emojiElements.push({
+x:x,
+y:y,
+text:text,
+size:emojiSize
+});
+
+redrawEmojis();
+
+}
+
+
+
+
+function redrawEmojis(){
+
+emojiElements.forEach(e=>{
+
+ctx.font=e.size+"px Arial";
+
+ctx.textAlign="center";
+
+ctx.textBaseline="middle";
+
+ctx.fillText(e.text,e.x,e.y);
+
+});
+
+}
+
+
+
+
+function clearDrawing(){
+
+saveState();
+
+ctx.clearRect(
+0,
+0,
+canvas.width,
+canvas.height
+);
+
+redrawEmojis();
+
+}
+
+
+
+
+function clearEverything(){
+
+saveState();
+
+emojiElements=[];
+
+ctx.clearRect(
+0,
+0,
+canvas.width,
+canvas.height
+);
+
+}
+
+
+
+
+function saveImage(){
+
+let imageData = ctx.getImageData(
+  0,
+  0,
+  canvas.width,
+  canvas.height
+);
+
+let pixels = imageData.data;
+
+
+let minX = canvas.width;
+let minY = canvas.height;
+let maxX = 0;
+let maxY = 0;
+
+
+for(let y=0;y<canvas.height;y++){
+
+  for(let x=0;x<canvas.width;x++){
+
+    let index=(y*canvas.width+x)*4;
+
+    let alpha=pixels[index+3];
+
+    if(alpha>0){
+
+      if(x<minX) minX=x;
+      if(x>maxX) maxX=x;
+      if(y<minY) minY=y;
+      if(y>maxY) maxY=y;
+
+    }
+
   }
 
+}
 
-  history.push(canvas.toDataURL());
+
+// nothing drawn
+if(maxX===0 && maxY===0){
+
+alert("Nothing to save");
+return;
+
+}
 
 
-  redoHistory = [];
+let cropWidth=maxX-minX+1;
+let cropHeight=maxY-minY+1;
+
+
+let cropCanvas=document.createElement("canvas");
+
+cropCanvas.width=cropWidth;
+cropCanvas.height=cropHeight;
+
+
+let cropCtx=cropCanvas.getContext("2d");
+
+
+cropCtx.drawImage(
+  canvas,
+  minX,
+  minY,
+  cropWidth,
+  cropHeight,
+  0,
+  0,
+  cropWidth,
+  cropHeight
+);
+
+
+
+let link=document.createElement("a");
+
+link.download="drawing.png";
+
+link.href=cropCanvas.toDataURL("image/png");
+
+link.click();
+
+
+}
+
+
+
+async function shareImage(){
+
+canvas.toBlob(async blob=>{
+
+let file=new File(
+[blob],
+"drawing.png",
+{type:"image/png"}
+);
+
+
+if(navigator.share){
+
+await navigator.share({
+
+title:"",
+
+files:[file]
+
+});
+
+}
+
+});
 
 }
 
@@ -209,22 +529,157 @@ function saveState(){
 
 
 
-// Undo
+canvas.addEventListener("mousedown",e=>{
+
+saveState();
+
+
+if(emojiMode){
+
+drawEmoji(
+e.offsetX,
+e.offsetY
+);
+
+return;
+
+}
+
+
+drawing=true;
+
+ctx.beginPath();
+
+ctx.moveTo(
+e.offsetX,
+e.offsetY
+);
+
+});
+
+
+
+
+
+canvas.addEventListener("mousemove",e=>{
+
+
+if(!drawing||emojiMode)return;
+
+
+ctx.lineWidth=brushSize;
+
+ctx.lineCap="round";
+
+ctx.strokeStyle=
+document.getElementById("colorPicker").value;
+
+
+ctx.lineTo(
+e.offsetX,
+e.offsetY
+);
+
+ctx.stroke();
+
+
+});
+
+
+
+canvas.addEventListener(
+"mouseup",
+()=>drawing=false
+);
+
+
+
+canvas.addEventListener("touchstart",e=>{
+
+e.preventDefault();
+
+let rect=canvas.getBoundingClientRect();
+
+let t=e.touches[0];
+
+
+let x=t.clientX-rect.left;
+
+let y=t.clientY-rect.top;
+
+
+saveState();
+
+
+if(emojiMode){
+
+drawEmoji(x,y);
+
+return;
+
+}
+
+
+drawing=true;
+
+ctx.beginPath();
+
+ctx.moveTo(x,y);
+
+
+});
+
+
+
+canvas.addEventListener("touchmove",e=>{
+
+e.preventDefault();
+
+if(!drawing||emojiMode)return;
+
+
+let rect=canvas.getBoundingClientRect();
+
+let t=e.touches[0];
+
+
+let x=t.clientX-rect.left;
+
+let y=t.clientY-rect.top;
+
+
+ctx.lineWidth=brushSize;
+
+ctx.lineCap="round";
+
+ctx.strokeStyle=
+document.getElementById("colorPicker").value;
+
+
+ctx.lineTo(x,y);
+
+ctx.stroke();
+
+
+});
+
+
+canvas.addEventListener(
+"touchend",
+()=>drawing=false
+);
+
+
 
 function undo(){
 
-  if(history.length === 0){
-    return;
-  }
+  if(undoStack.length === 0) return;
 
-
-  redoHistory.push(canvas.toDataURL());
-
+  redoStack.push(canvas.toDataURL());
 
   let img = new Image();
 
-  img.src = history.pop();
-
+  img.src = undoStack.pop();
 
   img.onload = function(){
 
@@ -235,37 +690,29 @@ function undo(){
       canvas.height
     );
 
-
     ctx.drawImage(
       img,
       0,
       0
     );
 
+    redrawEmojis();
+
   };
 
 }
 
 
-
-
-
-// Redo
 
 function redo(){
 
-  if(redoHistory.length === 0){
-    return;
-  }
+  if(redoStack.length === 0) return;
 
-
-  history.push(canvas.toDataURL());
-
+  undoStack.push(canvas.toDataURL());
 
   let img = new Image();
 
-  img.src = redoHistory.pop();
-
+  img.src = redoStack.pop();
 
   img.onload = function(){
 
@@ -276,262 +723,21 @@ function redo(){
       canvas.height
     );
 
-
     ctx.drawImage(
       img,
       0,
       0
     );
 
+    redrawEmojis();
+
   };
 
 }
 
-
-
-
-
-// Draw
-
-function drawLine(x,y){
-
-  ctx.lineWidth =
-    document.getElementById("brushSize").value;
-
-
-  ctx.lineCap = "round";
-
-
-  ctx.strokeStyle =
-    document.getElementById("colorPicker").value;
-
-
-  ctx.lineTo(x,y);
-
-  ctx.stroke();
-
-}
-
-
-
-
-
-// Mouse
-
-canvas.addEventListener("mousedown",function(e){
-
-  saveState();
-
-  drawing = true;
-
-
-  ctx.beginPath();
-
-  ctx.moveTo(
-    e.offsetX,
-    e.offsetY
-  );
-
-});
-
-
-
-canvas.addEventListener("mousemove",function(e){
-
-  if(!drawing) return;
-
-
-  drawLine(
-    e.offsetX,
-    e.offsetY
-  );
-
-});
-
-
-
-canvas.addEventListener("mouseup",function(){
-
-  drawing = false;
-
-});
-
-
-canvas.addEventListener("mouseleave",function(){
-
-  drawing = false;
-
-});
-
-
-
-
-
-
-// Touch
-
-canvas.addEventListener("touchstart",function(e){
-
-  e.preventDefault();
-
-  saveState();
-
-
-  let rect = canvas.getBoundingClientRect();
-
-  let touch = e.touches[0];
-
-
-  drawing = true;
-
-
-  ctx.beginPath();
-
-
-  ctx.moveTo(
-    touch.clientX - rect.left,
-    touch.clientY - rect.top
-  );
-
-});
-
-
-
-canvas.addEventListener("touchmove",function(e){
-
-  e.preventDefault();
-
-
-  if(!drawing){
-    return;
-  }
-
-
-  let rect = canvas.getBoundingClientRect();
-
-  let touch = e.touches[0];
-
-
-  drawLine(
-    touch.clientX - rect.left,
-    touch.clientY - rect.top
-  );
-
-});
-
-
-
-canvas.addEventListener("touchend",function(){
-
-  drawing = false;
-
-});
-
-
-
-
-
-
-
-// Clear
-
-function clearCanvas(){
-
-  saveState();
-
-
-  ctx.clearRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-
-}
-
-
-
-
-
-// Hide/show
-
-function toggleCanvas(){
-
-  visible = !visible;
-
-
-  document.getElementById("canvasContainer").style.display =
-    visible ? "block" : "none";
-
-}
-
-
-
-
-
-// Save PNG
-
-function savePNG(){
-
-  let link = document.createElement("a");
-
-
-  link.download = "drawing.png";
-
-
-  link.href = canvas.toDataURL("image/png");
-
-
-  link.click();
-
-}
-
-
-
-
-
-// Share PNG
-
-function sharePNG(){
-
-  canvas.toBlob(function(blob){
-
-
-    let file = new File(
-      [blob],
-      "drawing.png",
-      {
-        type:"image/png"
-      }
-    );
-
-
-    if(
-      navigator.share &&
-      navigator.canShare({files:[file]})
-    ){
-
-      navigator.share({
-        //title:"Drawing",
-        //text:"",
-        files:[file]
-      });
-
-    }
-    else{
-
-      alert("Sharing not supported on this device.");
-
-    }
-
-
-  });
-
-}
-
+updateUI();
 
 </script>
-
 
 </body>
 </html>

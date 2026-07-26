@@ -191,12 +191,20 @@ Size:
 
 
 <div id="bottomControls">
-
 <div class="row">
+
+
+<button onclick="toggleCrop()">
+Save/Send Auto Crop: ON
+</button>
 
 <button onclick="saveImage()">
 Save as PNG
 </button>
+
+</div>
+<div class="row">
+
 
 <button onclick="shareImage()">
 Send / Share
@@ -409,19 +417,128 @@ canvas.height
 
 
 
+let autoCrop=true;
+
+
+function toggleCrop(){
+
+autoCrop=!autoCrop;
+
+event.target.innerText =
+autoCrop
+? "Auto Crop: ON"
+: "Auto Crop: OFF";
+
+}
+
+
+
 function saveImage(){
+
+if(!autoCrop){
 
 let link=document.createElement("a");
 
 link.download="drawing.png";
 
-link.href=canvas.toDataURL();
+link.href=canvas.toDataURL("image/png");
 
 link.click();
+
+return;
 
 }
 
 
+// AUTO CROP
+
+let imageData = ctx.getImageData(
+0,
+0,
+canvas.width,
+canvas.height
+);
+
+
+let pixels=imageData.data;
+
+
+let minX=canvas.width;
+let minY=canvas.height;
+let maxX=0;
+let maxY=0;
+
+
+for(let y=0;y<canvas.height;y++){
+
+for(let x=0;x<canvas.width;x++){
+
+let index=(y*canvas.width+x)*4;
+
+let alpha=pixels[index+3];
+
+
+if(alpha>0){
+
+if(x<minX)minX=x;
+if(x>maxX)maxX=x;
+if(y<minY)minY=y;
+if(y>maxY)maxY=y;
+
+}
+
+}
+
+}
+
+
+if(maxX===0 && maxY===0){
+
+alert("Nothing to save");
+
+return;
+
+}
+
+
+
+let cropWidth=maxX-minX+1;
+let cropHeight=maxY-minY+1;
+
+
+let cropCanvas=document.createElement("canvas");
+
+cropCanvas.width=cropWidth;
+cropCanvas.height=cropHeight;
+
+
+let cropCtx=cropCanvas.getContext("2d");
+
+
+cropCtx.drawImage(
+canvas,
+minX,
+minY,
+cropWidth,
+cropHeight,
+0,
+0,
+cropWidth,
+cropHeight
+);
+
+
+
+let link=document.createElement("a");
+
+link.download="drawing.png";
+
+link.href=cropCanvas.toDataURL("image/png");
+
+link.click();
+
+
+}
 
 
 async function shareImage(){
